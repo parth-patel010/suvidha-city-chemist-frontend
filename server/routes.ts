@@ -10,6 +10,7 @@ import type { Express } from "express";
   import bcrypt from "bcrypt";
   import jwt from "jsonwebtoken";
   import { whatsappService } from "./whatsapp";
+  import { aiClient } from "./ai-client";
 
   const JWT_SECRET = process.env.SESSION_SECRET || "pharmacy-secret-key";
 
@@ -958,6 +959,189 @@ import type { Express } from "express";
       }
     });
 
-    console.log("✅ All API routes registered successfully (including Meta WhatsApp Cloud API)");
+    // ========== AI MICROSERVICE ENDPOINTS ==========
+    app.get("/api/ai/health", authenticateToken, async (req, res) => {
+      try {
+        const result = await aiClient.checkAIHealth();
+        res.json(result);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    app.post("/api/ai/predict/demand", authenticateToken, async (req: any, res) => {
+      try {
+        const { productId, forecastDays } = req.body;
+        if (!productId) {
+          return res.status(400).json({ error: "productId is required" });
+        }
+        const branchId = req.user.branchId;
+
+        const salesData = await db.query.saleItems.findMany({
+          with: { sale: true },
+          where: eq(saleItems.productId, productId),
+        });
+
+        const salesHistory = salesData
+          .filter((si: any) => si.sale && si.sale.branchId === branchId)
+          .map((si: any) => ({
+            date: si.sale.saleDate,
+            quantity: si.quantity,
+          }));
+
+        if (salesHistory.length === 0) {
+          return res.json({
+            product_id: productId,
+            method: "no_data",
+            forecast: [],
+            summary: {
+              avg_daily_demand: 0,
+              total_forecast: 0,
+              recommended_reorder_qty: 0,
+              message: "No sales history available for this product in your branch",
+            },
+          });
+        }
+
+        const result = await aiClient.predictDemand(salesHistory, productId, forecastDays);
+        if (!result.success) {
+          return res.status(502).json({ error: result.error });
+        }
+        res.json(result.data);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    app.post("/api/ai/predict/expiry-risk", authenticateToken, async (req: any, res) => {
+      try {
+        const branchId = req.query.branchId || req.user.branchId;
+
+        const inventoryData = await db.query.inventory.findMany({
+          where: eq(inventory.branchId, parseInt(branchId)),
+          with: { product: true },
+        });
+
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const recentSales = await db
+          .select({
+            productId: saleItems.productId,
+            totalQty: sql<number>`SUM(${saleItems.quantity})`,
+          })
+          .from(saleItems)
+          .innerJoin(sales, eq(saleItems.saleId, sales.id))
+          .where(and(
+            eq(sales.branchId, parseInt(branchId)),
+            gte(sales.saleDate, thirtyDaysAgo)
+          ))
+          .groupBy(saleItems.productId);
+
+        const avgDailySalesMap: Record<number, number> = {};
+        for (const row of recentSales) {
+          avgDailySalesMap[row.productId] = parseFloat(String(row.totalQty)) / 30;
+        }
+
+        const batches = inventoryData.map((inv: any) => ({
+          batch_number: inv.batchNumber,
+          product_id: inv.productId,
+          product_name: inv.product?.productName || "",
+          expiry_date: inv.expiryDate,
+          quantity_in_stock: inv.quantityInStock,
+          avg_daily_sales: avgDailySalesMap[inv.productId] || 0,
+        }));
+
+        const result = await aiClient.predictExpiryRisk(batches);
+        if (!result.success) {
+          return res.status(502).json({ error: result.error });
+        }
+        res.json(result.data);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    app.post("/api/ai/analyze/sales-trends", authenticateToken, async (req: any, res) => {
+      try {
+        const branchId = req.user.branchId;
+        const { period } = req.body;
+
+        const allSales = await db.query.sales.findMany({
+          where: eq(sales.branchId, branchId),
+          with: { saleItems: { with: { product: true } } },
+          orderBy: [sales.saleDate],
+        });
+
+        const salesData = allSales.map((s: any) => ({
+          date: s.saleDate,
+          amount: parseFloat(s.totalAmount),
+          quantity: s.saleItems?.reduce((sum: number, si: any) => sum + si.quantity, 0) || 0,
+        }));
+
+        if (salesData.length === 0) {
+          return res.json({
+            period_type: period || "monthly",
+            periods: [],
+            trend: { direction: "stable", slope: 0, growth_rate_pct: 0 },
+            summary: { total_revenue: 0, total_transactions: 0 },
+          });
+        }
+
+        const result = await aiClient.analyzeSalesTrends(salesData, period);
+        if (!result.success) {
+          return res.status(502).json({ error: result.error });
+        }
+        res.json(result.data);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    app.post("/api/ai/segment/customers", authenticateToken, async (req, res) => {
+      try {
+        const allCustomers = await db.query.customers.findMany({
+          where: eq(customers.isActive, true),
+        });
+
+        const lastSaleDates = await db
+          .select({
+            customerId: sales.customerId,
+            lastDate: sql<Date>`MAX(${sales.saleDate})`,
+            saleCount: sql<number>`COUNT(*)`,
+          })
+          .from(sales)
+          .where(sql`${sales.customerId} IS NOT NULL`)
+          .groupBy(sales.customerId);
+
+        const saleLookup: Record<number, { lastDate: Date; count: number }> = {};
+        for (const row of lastSaleDates) {
+          if (row.customerId) {
+            saleLookup[row.customerId] = {
+              lastDate: row.lastDate,
+              count: parseInt(String(row.saleCount)),
+            };
+          }
+        }
+
+        const customerData = allCustomers.map((c: any) => ({
+          customer_id: c.id,
+          customer_name: c.customerName,
+          total_purchases: parseFloat(c.totalPurchases || "0"),
+          purchase_count: saleLookup[c.id]?.count || (c.loyaltyPoints > 0 ? 1 : 0),
+          last_purchase_date: saleLookup[c.id]?.lastDate || null,
+        }));
+
+        const result = await aiClient.segmentCustomers(customerData);
+        if (!result.success) {
+          return res.status(502).json({ error: result.error });
+        }
+        res.json(result.data);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    console.log("✅ All API routes registered (WhatsApp Cloud API + AI Microservice)");
   }
   
