@@ -1,0 +1,246 @@
+Suvidha City Chemist — Pharmacy Pro System
+Build a full-stack web-based Pharmacy Management System called Suvidha Pharmacy Pro for a retail pharmacy in Vadodara, Gujarat, India. This is a production-grade business application with the following modules and features:
+
+Tech Stack
+
+Frontend: React.js + Tailwind CSS
+Backend: Node.js + Express.js
+Database: PostgreSQL (with Prisma ORM)
+Authentication: JWT-based login with role-based access (Admin, Cashier, Manager)
+Language: TypeScript (full-stack)
+WhatsApp: Twilio WhatsApp API or Meta WhatsApp Business API
+AI/ML: Python microservice (Flask) for AI features, called via REST from Node backend
+File Export: PDF (pdfkit) and Excel (exceljs)
+Hosting Target: Ubuntu VPS with NGINX
+
+
+Module 1 — Authentication & Role Management
+
+Login page with JWT auth
+Roles: Super Admin, Branch Manager, Cashier
+Each role has different access permissions
+Multi-branch support — user is assigned to a branch
+Session management with refresh tokens
+
+
+Module 2 — Product & Inventory Management
+
+Product Master: name, generic name, manufacturer, category, HSN code, GST %, MRP, purchase price, selling price
+Categories: Drugs, FMCG, Medical Devices, Surgical
+Batch Management: batch number, manufacturing date, expiry date, quantity
+Stock tracking per branch per batch
+Low stock alerts with configurable threshold per product
+Expiry alerts — flag batches expiring within 30/60/90 days
+Stock adjustment entry (damage, loss, audit correction)
+Inter-branch stock transfer (manual request + approval)
+Branch-wise stock report
+
+
+Module 3 — GST-Compliant Billing & POS
+
+Fast POS interface optimized for keyboard/barcode scanner
+Search product by name, barcode, or generic name
+Add multiple items to cart with quantity and discount
+Auto-calculate GST (CGST + SGST or IGST based on customer state)
+Customer selection or walk-in billing
+Credit customer billing with credit days and outstanding tracking
+Invoice generation with GST breakup
+Print invoice (thermal 80mm or A4)
+Share invoice via WhatsApp to customer's number
+Apply coupon or loyalty points at checkout
+Daily cash register / closing summary
+
+
+Module 4 — Purchase & Supplier Management
+
+Supplier Master: name, GST number, address, contact, bank details
+Purchase Order (PO) creation
+Goods Receipt Note (GRN) — receive items against PO, auto-update stock
+Direct purchase entry without PO
+Purchase return entry with reason
+Supplier ledger — all transactions, payments, outstanding balance
+Outstanding payment tracking with due date alerts
+Purchase report by supplier / date range / category
+
+
+Module 5 — Online Order Management
+
+Customer-facing web portal (separate simple UI) where customers can:
+
+Browse products by category
+Search by medicine name
+Add to cart and place order
+Upload prescription image
+Track order status
+
+
+Order status flow: Placed → Confirmed → Ready for Pickup / Out for Delivery → Completed
+Admin panel to manage incoming orders:
+
+View order details
+Confirm or reject order
+Mark as ready / dispatched
+Auto-generate invoice on confirmation
+
+
+Real-time inventory sync — only show in-stock items
+WhatsApp notification at each order stage
+
+
+Module 6 — WhatsApp Automation (Full)
+Integrate WhatsApp Business API with the following automated triggers:
+
+Invoice sharing — send PDF invoice after every billing
+Order updates — send message at each order status change
+Refill reminders — send reminder 25 days after a customer bought a chronic medicine
+Expiry alerts to customer — if customer bought a batch near expiry, notify them
+Loyalty notifications — points earned after purchase, tier upgrade, reward available
+Campaign broadcasts — admin can create and schedule broadcast messages to customer segments (e.g., all diabetic patients, all loyalty gold members)
+Supplier payment reminders — auto-remind supplier or self-remind for due payments
+Low stock PO nudge — notify manager when stock hits reorder level
+Template message management panel in admin
+
+
+Module 7 — Loyalty Engine
+
+Auto-award points on every purchase (configurable rate, e.g., ₹1 = 1 point)
+Loyalty tiers:
+
+Silver: 0–500 points
+Gold: 501–2000 points
+Platinum: 2001+ points
+
+
+Each tier has different benefits (extra discount %, birthday bonus, etc.)
+Redeem points at billing (partial or full redemption)
+Points expiry after 12 months of inactivity
+Loyalty dashboard:
+
+Total points issued
+Total redeemed
+Top 20 customers by points
+Tier distribution chart
+
+
+WhatsApp notification when points are earned or redeemed
+
+
+Module 8 — Advanced Dashboards & Business Intelligence
+Build an analytics dashboard with the following widgets/charts:
+
+Revenue Overview: Today / This Week / This Month / This Year — with % change vs previous period
+Sales Trend Chart: Line chart — daily sales for last 30/90 days
+Branch Comparison: Bar chart — revenue by branch
+Top 10 Products: By revenue and by quantity sold
+Category Breakdown: Pie chart — sales split by category
+Slow-Moving Stock: Products with zero or low sales in last 30 days
+Dead Stock: No movement in 90+ days
+Gross Margin Report: Margin % per product / category / supplier
+Expiry Tracker: Count of batches expiring in 30 / 60 / 90 days
+Supplier Outstanding: Total payable by supplier
+Customer Outstanding: Total receivable from credit customers
+All widgets support custom date range filter
+Export any report to PDF or Excel
+
+
+Module 9 — Lite AI Features (Python Flask Microservice)
+Build a Python Flask microservice that exposes REST endpoints called by the Node backend:
+9a. Demand Forecasting
+
+Input: last 6 months of daily sales per product
+Algorithm: simple exponential smoothing or linear regression
+Output: predicted quantity needed for next 30 days
+Display as "Suggested Reorder Quantity" in purchase module
+
+9b. Expiry Risk Prediction
+
+Input: current stock batches with expiry dates and current sales velocity
+Output: risk score (High / Medium / Low) for each batch
+High risk = batch will expire before it sells out at current velocity
+Show in expiry dashboard with actionable suggestion (discount / return to supplier)
+
+9c. Sales Trend Analysis
+
+Input: historical sales data
+Output: seasonal patterns, month-on-month trend, fast-moving vs slow-moving shift
+Show as insight cards on dashboard: e.g., "Cough syrup sales typically rise 40% in Nov–Jan"
+
+9d. Customer Segmentation (RFM)
+
+Input: customer purchase history
+Segment customers into: Active, At-Risk, Lapsing, Dormant, New, Champion
+Based on Recency, Frequency, Monetary value
+Used for targeted WhatsApp campaign targeting
+
+
+Module 10 — Basic CRM & Customer Management
+
+Customer Master: name, phone, email, address, date of birth, chronic conditions (optional)
+Purchase history per customer
+Lifetime value calculation
+Customer segmentation tags (from AI RFM)
+Filter customers by segment for WhatsApp campaigns
+Birthday automation — WhatsApp message + bonus points on birthday
+Gap customers report — customers who haven't visited in 30/60/90 days
+
+
+Module 11 — Reports Module
+All reports should support date range filter and export to PDF / Excel:
+
+Daily Sales Report
+Monthly Sales Summary
+Product-wise Sales Report
+Category-wise Sales Report
+Branch-wise Sales Report
+Stock Report (current stock with batch details)
+Expiry Report
+Purchase Report
+Supplier Outstanding Report
+Customer Outstanding Report
+Profit & Margin Report
+GST Report (GSTR-1 format summary)
+Loyalty Points Report
+
+
+Database Schema (Key Tables)
+users, branches, roles, permissions
+products, categories, batches, stock
+suppliers, purchase_orders, purchase_items, grn, purchase_returns
+customers, customer_loyalty, loyalty_transactions
+invoices, invoice_items, payments
+online_orders, online_order_items
+whatsapp_logs, whatsapp_templates, campaigns
+ai_forecasts, ai_expiry_risks, ai_segments
+
+UI/UX Requirements
+
+Clean, professional design with sidebar navigation
+Mobile-responsive (especially billing and order portal)
+Dark mode support
+Toast notifications for all actions
+Loading states and skeleton screens
+Confirmation dialogs for destructive actions
+Keyboard shortcuts for POS (F2 = new bill, F8 = payment, Esc = cancel)
+Color theme: Primary Blue (#1346C8), Accent Teal (#00B4A2)
+
+
+Key Business Rules
+
+All prices in Indian Rupees (₹)
+GST calculations must follow Indian GST rules (CGST+SGST for same state, IGST for interstate)
+Batch with earliest expiry should be consumed first (FEFO — First Expiry First Out)
+Stock can never go below 0 (block sale if insufficient stock)
+All financial entries must have audit trail (created_by, created_at, updated_by, updated_at)
+Soft delete only — no hard deletes on financial records
+
+
+Project Structure
+/client          → React frontend
+/server          → Node.js + Express backend
+/ai-service      → Python Flask AI microservice
+/shared          → Shared types (TypeScript interfaces)
+/database        → Prisma schema + migrations
+/docs            → API documentation
+
+Summary
+This is a complete, production-ready pharmacy ERP system for a retail multi-branch Indian pharmacy. Every module must be fully functional, not just UI mockups. Use proper error handling, input validation, and loading states throughout. The system must handle concurrent users and be deployable on a Linux VPS with NGINX reverse proxy.
