@@ -229,7 +229,7 @@ function CategoriesSection() {
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const res = await fetch(apiUrl("/api/categories", { headers: getAuthHeaders() });
+      const res = await fetch(apiUrl("/api/categories"), { headers: getAuthHeaders() });
       if (!res.ok) throw new Error("Failed to fetch categories");
       return res.json();
     },
@@ -237,7 +237,7 @@ function CategoriesSection() {
 
   const addMutation = useMutation({
     mutationFn: async (data: { categoryName: string; description: string }) => {
-      const res = await fetch(apiUrl("/api/categories", {
+      const res = await fetch(apiUrl("/api/categories"), {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(data),
@@ -378,7 +378,7 @@ function ManufacturersSection() {
   const { data: manufacturers, isLoading } = useQuery({
     queryKey: ["manufacturers"],
     queryFn: async () => {
-      const res = await fetch(apiUrl("/api/manufacturers", { headers: getAuthHeaders() });
+      const res = await fetch(apiUrl("/api/manufacturers"), { headers: getAuthHeaders() });
       if (!res.ok) throw new Error("Failed to fetch manufacturers");
       return res.json();
     },
@@ -386,7 +386,7 @@ function ManufacturersSection() {
 
   const addMutation = useMutation({
     mutationFn: async (data: typeof form) => {
-      const res = await fetch(apiUrl("/api/manufacturers", {
+      const res = await fetch(apiUrl("/api/manufacturers"), {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(data),
@@ -551,7 +551,7 @@ function LoyaltyTiersSection() {
   const { data: tiers, isLoading } = useQuery({
     queryKey: ["loyalty-tiers"],
     queryFn: async () => {
-      const res = await fetch(apiUrl("/api/loyalty-tiers", { headers: getAuthHeaders() });
+      const res = await fetch(apiUrl("/api/loyalty-tiers"), { headers: getAuthHeaders() });
       if (!res.ok) throw new Error("Failed to fetch loyalty tiers");
       return res.json();
     },
@@ -611,7 +611,7 @@ function WhatsAppStatusSection() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["whatsapp-status"],
     queryFn: async () => {
-      const res = await fetch(apiUrl("/api/whatsapp/status", { headers: getAuthHeaders() });
+      const res = await fetch(apiUrl("/api/whatsapp/status"), { headers: getAuthHeaders() });
       if (!res.ok) throw new Error("Failed to fetch WhatsApp status");
       return res.json();
     },
@@ -675,7 +675,7 @@ function AIServiceSection() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["ai-health"],
     queryFn: async () => {
-      const res = await fetch(apiUrl("/api/ai/health", { headers: getAuthHeaders() });
+      const res = await fetch(apiUrl("/api/ai/health"), { headers: getAuthHeaders() });
       if (!res.ok) throw new Error("Failed to fetch AI health");
       return res.json();
     },

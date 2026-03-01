@@ -27,7 +27,7 @@ export default function UsersPage() {
   const { data: users, isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      const res = await fetch(apiUrl("/api/users", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(apiUrl("/api/users"), { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
@@ -36,7 +36,7 @@ export default function UsersPage() {
   const { data: roles } = useQuery({
     queryKey: ["roles"],
     queryFn: async () => {
-      const res = await fetch(apiUrl("/api/roles", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(apiUrl("/api/roles"), { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
@@ -45,7 +45,7 @@ export default function UsersPage() {
   const { data: branches } = useQuery({
     queryKey: ["branches"],
     queryFn: async () => {
-      const res = await fetch(apiUrl("/api/branches", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(apiUrl("/api/branches"), { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
@@ -53,7 +53,7 @@ export default function UsersPage() {
 
   const addMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await fetch(apiUrl("/api/auth/register", {
+      const res = await fetch(apiUrl("/api/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...data, roleId: parseInt(data.roleId), branchId: parseInt(data.branchId) }),

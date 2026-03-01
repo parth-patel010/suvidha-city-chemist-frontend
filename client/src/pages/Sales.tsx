@@ -217,7 +217,7 @@ export default function Sales() {
 
   const createSaleMutation = useMutation({
     mutationFn: async (salePayload: any) => {
-      const response = await fetch(apiUrl("/api/sales", {
+      const response = await fetch(apiUrl("/api/sales"), {
         method: "POST",
         headers: { ...authHeaders, "Content-Type": "application/json" },
         body: JSON.stringify(salePayload),

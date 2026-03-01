@@ -205,7 +205,7 @@ export default function Products() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch(apiUrl("/api/products", {
+      const response = await fetch(apiUrl("/api/products"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
